@@ -8,7 +8,8 @@ jest.mock('@/lib/reconstruct', () => ({
 
 const mockedReconstructWord = jest.mocked(reconstructWord)
 
-function answerCurrentLanguage(value: string) {
+async function answerCurrentLanguage(value: string) {
+  await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled())
   fireEvent.change(screen.getByRole('textbox'), { target: { value } })
   fireEvent.click(screen.getByRole('button', { name: 'Enviar resposta' }))
 }
@@ -27,15 +28,15 @@ describe('Fluxo do Reconstrutor Latino', () => {
     render(<Page />)
     expect(screen.getByText('Qual é a palavra em Português?')).toBeInTheDocument()
 
-    answerCurrentLanguage('fogo')
+    await answerCurrentLanguage('fogo')
     await waitFor(() => expect(screen.getByText('E em Italiano, como se diz?')).toBeInTheDocument())
-    answerCurrentLanguage('fuoco')
+    await answerCurrentLanguage('fuoco')
     await waitFor(() => expect(screen.getByText('Agora a versão em Espanhol:')).toBeInTheDocument())
-    answerCurrentLanguage('fuego')
+    await answerCurrentLanguage('fuego')
     await waitFor(() => expect(screen.getByText('Em Francês, qual a forma?')).toBeInTheDocument())
-    answerCurrentLanguage('feu')
+    await answerCurrentLanguage('feu')
     await waitFor(() => expect(screen.getByText('Por fim, como fica em Romeno?')).toBeInTheDocument())
-    answerCurrentLanguage('foc')
+    await answerCurrentLanguage('foc')
 
     expect(mockedReconstructWord).toHaveBeenCalledTimes(1)
     expect(screen.getByText('Modelo em execução')).toBeInTheDocument()
@@ -56,11 +57,15 @@ describe('Fluxo do Reconstrutor Latino', () => {
     mockedReconstructWord.mockResolvedValue('AMICUS')
     render(<Page />)
 
-    answerCurrentLanguage('fogo')
-    answerCurrentLanguage('fuoco')
-    answerCurrentLanguage('fuego')
-    answerCurrentLanguage('feu')
-    answerCurrentLanguage('foc')
+    await answerCurrentLanguage('fogo')
+    await waitFor(() => expect(screen.getByText('E em Italiano, como se diz?')).toBeInTheDocument())
+    await answerCurrentLanguage('fuoco')
+    await waitFor(() => expect(screen.getByText('Agora a versão em Espanhol:')).toBeInTheDocument())
+    await answerCurrentLanguage('fuego')
+    await waitFor(() => expect(screen.getByText('Em Francês, qual a forma?')).toBeInTheDocument())
+    await answerCurrentLanguage('feu')
+    await waitFor(() => expect(screen.getByText('Por fim, como fica em Romeno?')).toBeInTheDocument())
+    await answerCurrentLanguage('foc')
 
     await waitFor(() => expect(screen.getByText('AMICUS')).toBeInTheDocument())
     expect(screen.getByText('Reconstrução concluída')).toBeInTheDocument()
@@ -70,11 +75,15 @@ describe('Fluxo do Reconstrutor Latino', () => {
     mockedReconstructWord.mockRejectedValue(new Error('falha'))
     render(<Page />)
 
-    answerCurrentLanguage('fogo')
-    answerCurrentLanguage('fuoco')
-    answerCurrentLanguage('fuego')
-    answerCurrentLanguage('feu')
-    answerCurrentLanguage('foc')
+    await answerCurrentLanguage('fogo')
+    await waitFor(() => expect(screen.getByText('E em Italiano, como se diz?')).toBeInTheDocument())
+    await answerCurrentLanguage('fuoco')
+    await waitFor(() => expect(screen.getByText('Agora a versão em Espanhol:')).toBeInTheDocument())
+    await answerCurrentLanguage('fuego')
+    await waitFor(() => expect(screen.getByText('Em Francês, qual a forma?')).toBeInTheDocument())
+    await answerCurrentLanguage('feu')
+    await waitFor(() => expect(screen.getByText('Por fim, como fica em Romeno?')).toBeInTheDocument())
+    await answerCurrentLanguage('foc')
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível concluir a reconstrução'))
     expect(screen.getByRole('textbox')).not.toBeDisabled()

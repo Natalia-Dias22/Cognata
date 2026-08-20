@@ -36,7 +36,14 @@ export default function Page() {
   const answersRef = useRef<Record<string, string>>({})
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const messagesContainer = document.querySelector<HTMLElement>('.flex-1.overflow-y-auto')
+    if (messagesContainer) {
+      if (typeof messagesContainer.scrollTo === 'function') {
+        messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' })
+      } else {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight
+      }
+    }
   }, [messages, isProcessing])
 
   const progress = Math.min(step, languages.length)
@@ -62,7 +69,11 @@ export default function Page() {
     if (step < languages.length - 1) {
       const next = step + 1
       setStep(next)
-      window.setTimeout(() => setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', text: prompts[next], language: languages[next].label }]), 250)
+      setIsProcessing(true)
+      window.setTimeout(() => {
+        setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', text: prompts[next], language: languages[next].label }])
+        setIsProcessing(false)
+      }, 450)
       return
     }
 
@@ -70,14 +81,15 @@ export default function Page() {
     setIsProcessing(true)
     reconstructWord(answersRef.current)
       .then((word) => {
-        setResult(true)
-        setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', text: word, result: true }])
+        window.setTimeout(() => {
+          setResult(true)
+          setMessages((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', text: word, result: true }])
+          setIsProcessing(false)
+        }, 450)
       })
       .catch(() => {
         setError('Não foi possível concluir a reconstrução')
-      })
-      .finally(() => {
-      setIsProcessing(false)
+        setIsProcessing(false)
       })
   }
 
@@ -102,7 +114,7 @@ export default function Page() {
           <div className="mt-auto flex items-center gap-2 border-t border-border pt-4 text-xs text-muted-foreground"><div className="flex size-7 items-center justify-center rounded-full bg-muted"><User data-icon="inline-start" /></div><span>Projeto acadêmico</span></div>
         </aside>
 
-        <section className="mx-auto flex min-h-[calc(100vh-7rem)] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <section className="mx-auto flex h-[calc(100vh-7rem)] min-h-0 w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-5"><div><h1 className="text-sm font-semibold">Reconstrução linguística</h1><p className="text-xs text-muted-foreground">Assistente de análise comparativa</p></div><div className="flex items-center gap-2 text-xs text-muted-foreground"><span className={`size-2 rounded-full ${result ? 'bg-primary' : isProcessing ? 'animate-pulse bg-accent' : 'bg-emerald-500'}`} />{statusText}</div></div>
           {error && <div role="alert" className="border-b border-border bg-destructive/10 px-4 py-3 text-sm text-destructive sm:px-5">{error}</div>}
           <div className="border-b border-border bg-muted/30 px-4 py-3 sm:px-5"><div className="mb-2 flex items-center justify-between text-xs"><span className="font-medium">Variantes românicas</span><span className="font-mono text-muted-foreground">{progress}/{languages.length}</span></div><div className="flex gap-1.5">{languages.map((language, index) => <div key={language.key} className={`h-1.5 flex-1 rounded-full ${index < progress ? 'bg-primary' : 'bg-border'}`} aria-label={`${language.label}: ${index < progress ? 'preenchida' : 'pendente'}`} />)}</div><div className="mt-2 flex justify-between font-mono text-[10px] uppercase text-muted-foreground">{languages.map((language) => <span key={language.key}>{language.short}</span>)}</div></div>
