@@ -47,10 +47,36 @@ describe('Fluxo do Reconstrutor Latino', () => {
     const submit = screen.getByRole('button', { name: 'Enviar resposta' })
     const input = screen.getByRole('textbox')
 
-    expect(submit).toBeDisabled()
     fireEvent.change(input, { target: { value: '   ' } })
-    expect(submit).toBeDisabled()
+    expect(submit).not.toBeDisabled()
+    fireEvent.click(submit)
+    expect(screen.getByRole('alert')).toHaveTextContent('Digite a palavra')
     expect(screen.getByText('Qual é a palavra em Português?')).toBeInTheDocument()
+  })
+
+  it('filtra caracteres inválidos e preserva caracteres dos idiomas', () => {
+    render(<Page />)
+    const input = screen.getByRole('textbox')
+
+    fireEvent.input(input, { target: { value: 'ação déjà-vu șț 123@!' } })
+
+    expect(input).toHaveValue('ação déjà-vu șț ')
+  })
+
+  it('limita a entrada a 100 caracteres e remove o alerta ao digitar', () => {
+    render(<Page />)
+    const input = screen.getByRole('textbox')
+    const submit = screen.getByRole('button', { name: 'Enviar resposta' })
+
+    fireEvent.click(submit)
+    expect(screen.getByRole('alert')).toHaveTextContent('Digite a palavra')
+
+    fireEvent.input(input, { target: { value: 'palavra' } })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+    fireEvent.input(input, { target: { value: 'a'.repeat(101) } })
+    expect(input).toHaveValue('a'.repeat(100))
+    expect(input).toHaveAttribute('maxLength', '100')
   })
 
   it('exibe a palavra retornada pela reconstrução', async () => {
