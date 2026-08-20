@@ -1,0 +1,67 @@
+name: CI/CD Principal
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ────────────── TRILHA FRONTEND ──────────────
+  lint-frontend:
+    uses: ./.github/workflows/lint-frontend.yml
+
+  build-test-frontend:
+    needs: lint-frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Rodar testes
+        run: npm run test
+
+      - name: Build de produção
+        run: npm run build
+
+ ##deploy-frontend:
+   ## needs: build-test-frontend
+    ##if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    ##runs-on: ubuntu-latest
+    ##steps:
+      ##- name: Checkout do código
+       ## uses: actions/checkout@v4
+
+     ## - name: Autenticar no GCP
+       ## uses: google-github-actions/auth@v2
+        ##with:
+          ##credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    ##  - name: Configurar gcloud CLI
+      ##  uses: google-github-actions/setup-gcloud@v2
+        ##with:
+          ##project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      # PENDENTE: confirmar se o serviço GCP definitivo do frontend é
+      # Cloud Run (assumido abaixo) ou outro (ex.: Firebase Hosting)
+     ## - name: Deploy no Cloud Run
+       ## run: |
+         ## gcloud run deploy reconstrutor-latino-frontend \
+           ## --source ./frontend \
+            ##--region southamerica-east1 \
+            ##--platform managed \
+            ##--allow-unauthenticated
+
